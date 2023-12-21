@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #3498db;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        textarea,
+        select,
+        input[type="datetime-local"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .map-container {
+            margin-top: 20px;
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%;
+            background: #f0f0f0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .buses-list {
+            margin-top: 20px;
+        }
+
+        .departures-list {
+            margin-top: 20px;
+        }
+
+        #departureList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #departureList li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Notes</h2>
+        <table id="managementTable">
+            <thead>
+                <tr>
+                    <th>Room Number</th>
+                    <th>Situation</th>
+                    <th>Details</th>
+                    <th>Date/Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <label for="roomNumber">Room Number:</label>
+        <input type="text" id="roomNumber" placeholder="Enter room number">
+
+        <label for="situation">Select Situation:</label>
+        <select id="situation">
+            <option value="lateCheckOuts">Late Check Out</option>
+            <option value="stayOvers">Stay Over</option>
+            <option value="babyCots">Baby Cot</option>
+            <option value="makeItTwin">Make it Twin</option>
+            <option value="makeItDouble">Make it Double</option>
+            <option value="extraBeds">Extra Bed</option>
+            <option value="duvets">Duvet</option>
+            <option value="Departures">Departures</option>
+            <option value="handover">Handover</option>
+        </select>
+
+        <textarea id="details" placeholder="Enter details"></textarea>
+        <input type="datetime-local" id="dateTime" disabled>
+        <button onclick="addToManagementTable()">Add to Table</button>
+
+        <!-- Departures List -->
+        <div class="departures-list">
+            <h2>Departures List</h2>
+            <ul id="departureList"></ul>
+            <button onclick="printDepartureList()">Print Departures List</button>
+        </div>
+
+        <!-- Map Container -->
+        <div class="map-container">
+            <img id="map" src="jo.jpg" alt="Map of St John's Wood">
+        </div>
+
+        <!-- List of Buses -->
+        <div class="buses-list">
+            <h2>Buses and Transportation</h2>
+            <ul>
+                <li><strong>To Oxford Street, Piccadilly Circus, Trafalgar Square, and Waterloo:</strong> Bus 139 St John's Wood Road Lord's Cricket Grd (Stop H)</li>
+                <li><strong>To Marble Arch:</strong> Bus 189 St John's Wood Road Lord's Cricket Grd (Stop H)</li>
+                <li><strong>To Selfridges and Oxford St:</strong> Bus 113 - London Central Mosque (Stop P)</li>
+                <li><strong>To Camden Town:</strong> Bus 274 - London Central Mosque (Stop N)</li>
+                <li><strong>To Paddington:</strong> Bus 46 - Cavendish Avenue (Stop E)</li>
+                <li><strong>To Westminster Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>
+                <li><strong>To London Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        var departureApartments = [];
+
+        function addToManagementTable() {
+            var roomNumber = document.getElementById('roomNumber').value;
+            var selectedSituation = document.getElementById('situation').value;
+            var details = document.getElementById('details').value;
+
+            if (roomNumber && selectedSituation) {
+                var table = document.getElementById('managementTable');
+                var row = table.insertRow(-1);
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                var cell5 = row.insertCell(4);
+
+                cell1.innerHTML = roomNumber;
+                cell2.innerHTML = selectedSituation;
+                cell3.innerHTML = details || '';
+
+                // Get current date and time
+                var currentDate = new Date();
+               
+                var formattedDate = currentDate.toISOString().slice(0, 16);
+
+                cell4.innerHTML = formattedDate;
+                cell5.innerHTML = '<button class="delete-btn" onclick="deleteRow(this)">Delete</button>';
+
+                // Handle Departures
+                if (selectedSituation === 'Departures') {
+                    addDeparture(roomNumber);
+                }
+
+            } else {
+                alert('Please fill in all required fields.');
+            }
+        }
+
+        function deleteRow(button) {
+            var row = button.parentNode.parentNode;
+            var table = row.parentNode;
+
+            var roomNumber = row.cells[0].innerHTML;
+            var selectedSituation = row.cells[1].innerHTML;
+
+            table.deleteRow(row.rowIndex);
+
+            // Remove from Departures list if it was a departure
+            if (selectedSituation === 'Departures') {
+                removeDeparture(roomNumber);
+            }
+        }
+
+        function addDeparture(roomNumber) {
+            // Add the roomNumber to the departureApartments array
+            departureApartments.push(roomNumber);
+            updateDeparturesList();
+        }
+
+        function removeDeparture(roomNumber) {
+            // Remove the roomNumber from the departureApartments array
+            departureApartments = departureApartments.filter(apartment => apartment !== roomNumber);
+            updateDeparturesList();
+        }
+
+        function updateDeparturesList() {
+            var departureList = document.getElementById('departureList');
+            // Clear previous list
+            departureList.innerHTML = '';
+
+            // Sort and add apartments to the list
+            departureApartments.sort((a, b) => a - b);
+            departureApartments.forEach(apartment => {
+                var li = document.createElement('li');
+                li.textContent = 'Apartment ' + apartment;
+                departureList.appendChild(li);
+            });
+        }
+
+        function printDepartureList() {
+            // Open a new window and print the Departures list
+            var printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Departures List</title></head><body>');
+            printWindow.document.write('<h2>Departures List</h2>');
+            printWindow.document.write('<ul>');
+            departureApartments.forEach(apartment => {
+                printWindow.document.write('<li>Apartment ' + apartment + '</li>');
+            });
+            printWindow.document.write('</ul>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+
+</body>
+
+</html>
